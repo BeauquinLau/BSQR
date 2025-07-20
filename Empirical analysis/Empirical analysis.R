@@ -376,7 +376,7 @@ if (nrow(df_mcmc_all_models) > 0) {
   cat("\n\n--- LaTeX Code for MCMC Sampling Efficiency Table (Table 3) ---\n"); print(knitr::kable(mcmc_summary_for_latex, format = "latex", booktabs = TRUE, digits = 2, caption = "MCMC Sampler Efficiency in Rolling-Window Analysis.", label = "mcmc_efficiency_asymmetric_detailed", col.names = c("Model", "Avg. Min. ESS", "Avg. Time (s)", "Avg. Divergences", "Avg. Selected $h$"))); cat("--- End of LaTeX Code ---\n")
 }
 
-#### --- IX. Data analysis in figures --- ####
+#### --- IX. Data Analysis in Figures --- ####
 if (!require(dplyr)) { install.packages("dplyr"); library(dplyr) }
 if (!require(lubridate)) { install.packages("lubridate"); library(lubridate) }
 
