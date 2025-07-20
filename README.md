@@ -87,10 +87,29 @@ source("Empirical_analysis.R")
 
 ## 4. Dependencies
 
-To reproduce the numerical results, please ensure the following R packages are installed. You can check your versions in R.
+To reproduce the numerical results, please ensure you have a working R environment (version 4.0 or higher is recommended) and the following R packages are installed. The scripts are designed to automatically install any missing packages.
 
-*   **rstan**: `(e.g., version 2.21.0 or higher)`
-*   **ggplot2**: `(e.g., version 3.4.0 or higher)`
-*   **dplyr**: `(e.g., version 1.1.0 or higher)`
-*   **reshape2**: `(e.g., version 1.4.4 or higher)`
-*   **gridExtra**: `(e.g., version 2.3 or higher)`
+**Core Packages (Used in both scripts):**
+*   **`dplyr`**: For data manipulation and transformation.
+*   **`readr`**: For reading CSV files efficiently (used in Empirical Analysis).
+*   **`cmdstanr`**: The primary interface for fitting Stan models.
+*   **`posterior`**: For processing and summarizing MCMC output.
+*   **`quantreg`**: For running standard quantile regression as a benchmark and for initialization.
+*   **`ggplot2`**: For generating plots and figures.
+*   **`knitr`**: For generating LaTeX tables from R data frames.
+
+**Additional Packages for Empirical Analysis:**
+*   **`lubridate`**: For handling date objects.
+*   **`tidyr`**: For data tidying, used in plotting.
+*   **`caret`**: For creating cross-validation data folds.
+*   **`e1071`**: For calculating skewness and kurtosis.
+*   **`stringr`**: For string manipulation in file and plot naming.
+*   **`colorspace`**: For creating advanced color palettes for plots.
+
+**Additional Packages for Simulation:**
+*   **`MASS`**: For generating multivariate normal data.
+*   **`rstan`**: While `cmdstanr` is used for fitting, some functions might rely on `rstan`'s ecosystem.
+*   **`matrixStats`**: For efficient matrix calculations.
+*   **`brms`**: For fitting the Bayesian Quantile Regression (BQR-ALD) benchmark model.
+*   **`parallel`**, **`future`**, **`future.apply`**, **`progressr`**: For parallel execution of the simulation replications.
+
