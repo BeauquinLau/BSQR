@@ -81,7 +81,7 @@ source("Empirical_analysis.R")
 
 ## 3. Core Stan Models
 
-*   **`bsqr_[kernel]_Z_robust.stan`**: Implements the BSQR model using different kernel functions (Epanechnikov, Gaussian, Triangular, Uniform) with a robust error structure.
+*   **`bsqr_[kernel]_Z_robust.stan`**: Implements the BSQR model using different kernel functions (Gaussian, Uniform, Epanechnikov, Triangular) with a robust error structure.
 *   **`bqr_ald.stan`**: Implements the standard Bayesian Quantile Regression model using the Asymmetric Laplace Distribution (ALD).
 
 
