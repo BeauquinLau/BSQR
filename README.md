@@ -66,7 +66,7 @@ source("simulation_main.R")
 
 This analysis demonstrates the empirical utility of the BSQR framework by investigating the asymmetric nature of dynamic systemic risk for a globally systemically important financial institution (JPMorgan Chase & Co.) in the post-COVID era. It applies a dynamic Capital Asset Pricing Model (CAPM) to the daily stock returns of JPM against the S&P 500 index. Using a rolling-window approach, the code estimates the downside beta (at τ=0.05) and upside beta (at τ=0.95) to capture how JPM’s risk exposure changes in different market conditions. The stability and economic insights from the BSQR models are compared against a standard Bayesian Quantile Regression (BQR-ALD) benchmark.
 
-📌 **To run:** Navigate to the `Empirical_Analysis/` directory and execute `Empirical analysis.R`.
+📌 **To run:** Navigate to the `Empirical analysis/` directory and execute `Empirical analysis.R`.
 
 ```R
 # In R/RStudio, with the working directory set to 'Empirical_Analysis/'
