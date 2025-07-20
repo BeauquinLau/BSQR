@@ -72,7 +72,7 @@ This analysis demonstrates the empirical utility of the BSQR framework by invest
 # In R/RStudio, with the working directory set to 'Empirical analysis/'
 source("Empirical analysis.R")
 ```
-**`Empirical_analysis.R`:**
+**`Empirical analysis.R`:**
 *   Loads the financial time series data from `SPX.csv` and `JPM.csv`.
 *   Fits the BSQR model (using Triangular and Uniform kernels) and the standard BQR model to the data.
 *   Computes VaR estimates and generates comparison plots.
