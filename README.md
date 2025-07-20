@@ -13,7 +13,7 @@ BSQR/
 │   ├── simulation_main.R
 │   └── BSQR_SimResults_AllKernels_20250715_M200_n200_FULLMCMC_CV.csv
 │
-├── Empirical_Analysis/
+├── Empirical_analysis/
 │   ├── bsqr_triangular_Z_robust.stan
 │   ├── bsqr_uniform_Z_robust.stan
 │   ├── bqr_ald.stan
