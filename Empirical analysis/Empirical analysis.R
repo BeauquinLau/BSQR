@@ -376,4 +376,104 @@ if (nrow(df_mcmc_all_models) > 0) {
   cat("\n\n--- LaTeX Code for MCMC Sampling Efficiency Table (Table 3) ---\n"); print(knitr::kable(mcmc_summary_for_latex, format = "latex", booktabs = TRUE, digits = 2, caption = "MCMC Sampler Efficiency in Rolling-Window Analysis.", label = "mcmc_efficiency_asymmetric_detailed", col.names = c("Model", "Avg. Min. ESS", "Avg. Time (s)", "Avg. Divergences", "Avg. Selected $h$"))); cat("--- End of LaTeX Code ---\n")
 }
 
+#### --- IX. Data analysis in figures --- ####
+if (!require(dplyr)) { install.packages("dplyr"); library(dplyr) }
+if (!require(lubridate)) { install.packages("lubridate"); library(lubridate) }
+
+# Define the model we will use for the analysis (BSQR-Uniform is a robust choice)
+MODEL_TO_ANALYZE <- "BSQR-Uniform"
+
+# --- Define Time Periods ---
+PRE_CRISIS_START <- as.Date("2019-01-01")
+PRE_CRISIS_END   <- as.Date("2019-12-31")
+CRISIS_START     <- as.Date("2020-03-01")
+CRISIS_END       <- as.Date("2021-12-31")
+POST_CRISIS_START<- as.Date("2022-01-01")
+POST_CRISIS_END  <- max(df_beta_all_models$Date) 
+
+# --- Function to extract detailed stats for a given tau ---
+get_detailed_stats <- function(tau_val) {
+  
+  # 1. Pre-Crisis Period
+  pre_crisis_data <- df_beta_all_models %>%
+    filter(Model == MODEL_TO_ANALYZE, 
+           Tau_Level == tau_val,
+           Date >= PRE_CRISIS_START, Date <= PRE_CRISIS_END)
+  
+  pre_crisis_mean <- mean(pre_crisis_data$Beta_Mean, na.rm = TRUE)
+  pre_crisis_sd   <- sd(pre_crisis_data$Beta_Mean, na.rm = TRUE)
+  
+  # 2. Crisis Period
+  crisis_data <- df_beta_all_models %>%
+    filter(Model == MODEL_TO_ANALYZE, 
+           Tau_Level == tau_val,
+           Date >= CRISIS_START, Date <= CRISIS_END)
+  
+  if (nrow(crisis_data) > 0) {
+    if (tau_val < 0.5) { # Downside beta, look for trough
+      crisis_extreme_val  <- min(crisis_data$Beta_Mean, na.rm = TRUE)
+      crisis_extreme_date <- crisis_data$Date[which.min(crisis_data$Beta_Mean)]
+    } else { # Upside beta, look for peak
+      crisis_extreme_val  <- max(crisis_data$Beta_Mean, na.rm = TRUE)
+      crisis_extreme_date <- crisis_data$Date[which.max(crisis_data$Beta_Mean)]
+    }
+  } else {
+    crisis_extreme_val <- NA
+    crisis_extreme_date <- NA
+  }
+  
+  # 3. Post-Crisis Period
+  post_crisis_data <- df_beta_all_models %>%
+    filter(Model == MODEL_TO_ANALYZE, 
+           Tau_Level == tau_val,
+           Date >= POST_CRISIS_START, Date <= POST_CRISIS_END)
+  
+  post_crisis_mean <- mean(post_crisis_data$Beta_Mean, na.rm = TRUE)
+  post_crisis_sd   <- sd(post_crisis_data$Beta_Mean, na.rm = TRUE)
+  
+  # 4. Magnitudes of Change
+  magnitude_change_crisis <- crisis_extreme_val - pre_crisis_mean
+  magnitude_change_perm   <- post_crisis_mean - pre_crisis_mean
+  
+  return(
+    list(
+      pre_crisis_mean = pre_crisis_mean,
+      pre_crisis_sd = pre_crisis_sd,
+      crisis_extreme_val = crisis_extreme_val,
+      crisis_extreme_date = crisis_extreme_date,
+      post_crisis_mean = post_crisis_mean,
+      post_crisis_sd = post_crisis_sd,
+      magnitude_change_crisis = magnitude_change_crisis,
+      magnitude_change_perm = magnitude_change_perm
+    )
+  )
+}
+
+# --- Extract stats for both Downside and Upside Betas ---
+downside_stats <- get_detailed_stats(0.05)
+upside_stats   <- get_detailed_stats(0.95)
+
+# --- Print the results clearly for copy-pasting ---
+cat("--- Please copy ALL the following output and paste it back to me ---\n\n")
+
+cat("--- DOWNSIDE BETA (tau = 0.05) ANALYSIS ---\n")
+cat(sprintf("Pre-Crisis Mean (2019): %.4f\n", downside_stats$pre_crisis_mean))
+cat(sprintf("Pre-Crisis Std. Dev. (2019): %.4f\n", downside_stats$pre_crisis_sd))
+cat(sprintf("Crisis Trough Value (2020-21): %.4f\n", downside_stats$crisis_extreme_val))
+cat(sprintf("Date of Crisis Trough: %s\n", as.character(downside_stats$crisis_extreme_date)))
+cat(sprintf("Post-Crisis Mean (2022-onward): %.4f\n", downside_stats$post_crisis_mean))
+cat(sprintf("Post-Crisis Std. Dev. (2022-onward): %.4f\n", downside_stats$post_crisis_sd))
+cat(sprintf("Magnitude of Crisis Shock (Trough - Pre-Crisis Mean): %.4f\n", downside_stats$magnitude_change_crisis))
+cat(sprintf("Magnitude of Persistent Shift (Post-Crisis Mean - Pre-Crisis Mean): %.4f\n\n", downside_stats$magnitude_change_perm))
+
+cat("--- UPSIDE BETA (tau = 0.95) ANALYSIS ---\n")
+cat(sprintf("Pre-Crisis Mean (2019): %.4f\n", upside_stats$pre_crisis_mean))
+cat(sprintf("Pre-Crisis Std. Dev. (2019): %.4f\n", upside_stats$pre_crisis_sd))
+cat(sprintf("Crisis Peak Value (2020-21): %.4f\n", upside_stats$crisis_extreme_val))
+cat(sprintf("Date of Crisis Peak: %s\n", as.character(upside_stats$crisis_extreme_date)))
+cat(sprintf("Post-Crisis Mean (2022-onward): %.4f\n", upside_stats$post_crisis_mean))
+cat(sprintf("Post-Crisis Std. Dev. (2022-onward): %.4f\n", upside_stats$post_crisis_sd))
+cat(sprintf("Magnitude of Crisis Shock (Peak - Pre-Crisis Mean): %.4f\n", upside_stats$magnitude_change_crisis))
+cat(sprintf("Magnitude of Persistent Shift (Post-Crisis Mean - Pre-Crisis Mean): %.4f\n", upside_stats$magnitude_change_perm))
+
 cat("\n\n--- All scripts executed successfully ---\n")
