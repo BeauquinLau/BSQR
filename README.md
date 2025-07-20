@@ -47,7 +47,7 @@ This repository provides executable scripts for the simulation studies and the e
 
 ### 2.1. Simulation Study
 
-This experiment evaluates the performance of the Bayesian Smoothed Quantile Regression (BSQR) model with different kernel functions (Epanechnikov, Gaussian, Triangular, Uniform) through Monte Carlo simulations.
+This study provides a comprehensive evaluation of the BSQR framework’s performance. It assesses the estimation accuracy and inferential validity of BSQR under various settings and compares it against established frequentist and Bayesian methods. Synthetic data is generated from a linear model with covariates following an autoregressive covariance structure, considering both sparse, high-dimensional and dense, lower-dimensional coefficient scenarios. To evaluate robustness, four different error distributions are employed: standard normal, heavy-tailed Student’s t, a bimodal mixture normal, and heteroscedastic normal.
 
 📌 **To run:** Navigate to the `Simulation/` directory and execute `simulation_main.R`.
 
@@ -64,7 +64,7 @@ source("simulation_main.R")
 
 ### 2.2. Empirical Analysis
 
-This analysis applies the BSQR model to real-world financial data (S&P 500 and JPMorgan Chase & Co.) to estimate Value-at-Risk (VaR), demonstrating the model's practical utility. The analysis compares BSQR with a standard Bayesian Quantile Regression (BQR) model.
+This analysis demonstrates the empirical utility of the BSQR framework by investigating the asymmetric nature of dynamic systemic risk for a globally systemically important financial institution (JPMorgan Chase & Co.) in the post-COVID era. It applies a dynamic Capital Asset Pricing Model (CAPM) to the daily stock returns of JPM against the S&P 500 index. Using a rolling-window approach, the code estimates the downside beta (at τ=0.05) and upside beta (at τ=0.95) to capture how JPM’s risk exposure changes in different market conditions. The stability and economic insights from the BSQR models are compared against a standard Bayesian Quantile Regression (BQR-ALD) benchmark.
 
 📌 **To run:** Navigate to the `Empirical_Analysis/` directory and execute `Empirical_analysis.R`.
 
