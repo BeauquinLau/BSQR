@@ -94,5 +94,3 @@ To reproduce the numerical results, please ensure the following R packages are i
 *   **dplyr**: `(e.g., version 1.1.0 or higher)`
 *   **reshape2**: `(e.g., version 1.4.4 or higher)`
 *   **gridExtra**: `(e.g., version 2.3 or higher)`
-
-*(Note: Please replace the example versions with the actual versions you used if known, or leave as is.)*
