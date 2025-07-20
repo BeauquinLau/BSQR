@@ -2,6 +2,7 @@ This repository contains the source code for the numerical experiments in our pa
 
 ## Repository Structure
 
+```text
 BSQR/
 │
 ├── Simulation/
@@ -20,8 +21,10 @@ BSQR/
 │   ├── SPX.csv
 │   └── JPM.csv
 │
+├── LICENSE
+│
 └── README.md
-
+```
 
 ## 1. Installation
 
