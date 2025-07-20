@@ -69,7 +69,7 @@ This analysis demonstrates the empirical utility of the BSQR framework by invest
 📌 **To run:** Navigate to the `Empirical analysis/` directory and execute `Empirical analysis.R`.
 
 ```R
-# In R/RStudio, with the working directory set to 'Empirical_Analysis/'
+# In R/RStudio, with the working directory set to 'Empirical analysis/'
 source("Empirical analysis.R")
 ```
 **`Empirical_analysis.R`:**
