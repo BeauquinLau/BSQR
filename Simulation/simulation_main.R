@@ -24,6 +24,15 @@ if (interactive() && requireNamespace("rstudioapi", quietly = TRUE)) {
   }
 }
 
+#### --- 0.1 Check and install 'remotes' package if missing --- ####
+if (!require("remotes")) {
+  install.packages("remotes")
+}
+
+remotes::install_github("stan-dev/cmdstanr")
+options(download.file.method = "libcurl")
+library(cmdstanr)
+
 #### --- 1. Environment and Packages --- ####
 required_packages <- c("MASS", "quantreg", "cmdstanr", "rstan", "tidyverse",
                        "matrixStats", "knitr", "posterior", "stringr", "brms", "parallel", "caret",
