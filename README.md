@@ -113,3 +113,17 @@ To reproduce the numerical results, please ensure you have a working R environme
 *   **`brms`**: For fitting the Bayesian Quantile Regression (BQR-ALD) benchmark model.
 *   **`parallel`**, **`future`**, **`future.apply`**, **`progressr`**: For parallel execution of the simulation replications.
 
+## 5. Citation
+
+If you use this code or the BSQR methodology in your research, please consider citing our paper:
+
+```bibtex
+@article{Liu2025,
+  author    = {Liu, Bingqi and Li, Kangqiang and Pang, Tianxiao},
+  title     = {Bayesian Smoothed Quantile Regression},
+  journal   = {arXiv preprint arXiv:2508.01738},
+  year      = {2025},
+  doi       = {10.48550/arXiv.2508.01738},
+  url       = {http://arxiv.org/abs/2508.01738},
+}
+```
