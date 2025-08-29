@@ -14,12 +14,15 @@ BSQR/
 │   └── BSQR_SimResults_AllKernels_20250715_M200_n200_FULLMCMC_CV.csv
 │
 ├── Empirical analysis/
-│   ├── bsqr_triangular_Z_robust.stan
-│   ├── bsqr_uniform_Z_robust.stan
-│   ├── bqr_ald.stan
-│   ├── Empirical analysis.R
-│   ├── SPX.csv
-│   └── JPM.csv
+│   ├── bqr_ald.stan
+│   ├── bsqr_triangular_Z_robust.stan
+│   ├── bsqr_uniform_Z_robust.stan
+│   ├── Empirical analysis.R
+│   ├── Figure_Beta_tau_0_05.pdf
+│   ├── Figure_Beta_tau_0_95.pdf
+│   ├── Figure_Sensitivity_Analysis.pdf
+│   ├── JPM.csv
+│   └── SPX.csv
 │
 ├── LICENSE
 │
@@ -76,7 +79,7 @@ source("Empirical analysis.R")
 *   Loads the financial time series data from `SPX.csv` and `JPM.csv`.
 *   Fits the BSQR model (using Triangular and Uniform kernels) and the standard BQR model to the data.
 *   Computes VaR estimates and generates comparison plots.
-*   Produces the figures and tables presented in the empirical section of the paper.
+*   Produces the figures and tables presented in the empirical section of the paper. For convenience, key figures (`Figure_*.pdf`) from our analysis are pre-generated and included in this directory.
 
 
 ## 3. Core Stan Models
