@@ -1,3 +1,10 @@
+# --------------------------------------------------------------------------
+# The timing results reported in this script (e.g., 'Avg. Time (s)') are 
+# hardware-dependent. For reproducibility, we note that the benchmarks 
+# presented herein were generated on a system equipped with an Apple M4 
+# processor. Actual runtimes may vary on different systems.
+# --------------------------------------------------------------------------
+
 # Clean up environment
 rm(list = ls()); gc()
 set.seed(123)
@@ -336,6 +343,119 @@ df_beta_all_models <- bind_rows(master_results_beta)
 df_forecasts_all_models <- bind_rows(master_results_forecasts)
 df_mcmc_all_models <- bind_rows(master_results_mcmc)
 
+#### --- VIII-A. Generate Sensitivity Analysis Figure (Figure 2) --- ####
+cat("--- Step VIII-A: Generating Sensitivity Analysis Figure for h ---\n")
+
+# 1. --- SETUP: Select the representative window and parameters ---
+# We select a window ending in mid-2020 to capture peak COVID-19 volatility.
+target_date <- as.Date("2020-06-30")
+tau_sensitivity <- 0.05 # We focus on the downside beta
+model_for_sensitivity <- "BSQR-Uniform"
+
+# Find the closest available end date in our results
+available_dates <- unique(df_beta_all_models$Date)
+actual_analysis_date <- available_dates[which.min(abs(available_dates - target_date))]
+cat(paste0("Selected representative window ending on: ", actual_analysis_date, "\n"))
+
+# Find the start index for this window's data
+window_end_index_sens <- which(returns_data$Date == actual_analysis_date)
+window_start_index_sens <- window_end_index_sens - window_size + 1
+sensitivity_window_df <- returns_data[window_start_index_sens:window_end_index_sens, ]
+
+# Get the original h value selected by CV for this specific window from main results
+h_cv_original <- df_mcmc_all_models %>%
+  filter(Date == actual_analysis_date, Tau_Level == tau_sensitivity, Model == model_for_sensitivity) %>%
+  pull(h_Selected)
+
+cat(paste0("Original h selected by CV for this window: h_CV = ", round(h_cv_original, 3), "\n"))
+
+# Define the h grid for our sensitivity analysis
+h_grid_sensitivity <- c(0.5 * h_cv_original, h_cv_original, 2.0 * h_cv_original)
+names(h_grid_sensitivity) <- c(paste0("h = 0.5*h_CV (", round(h_grid_sensitivity[1], 2), ")"), 
+                               paste0("h = h_CV (", round(h_grid_sensitivity[2], 2), ")"), 
+                               paste0("h = 2.0*h_CV (", round(h_grid_sensitivity[3], 2), ")"))
+
+# 2. --- EXECUTION: Loop through h values, re-run model, and collect draws ---
+all_beta_draws_sensitivity <- list()
+cat("Running BSQR model for each h value in the sensitivity grid...\n")
+pb_sens <- txtProgressBar(min = 0, max = length(h_grid_sensitivity), style = 3)
+
+for (i in seq_along(h_grid_sensitivity)) {
+  current_h <- h_grid_sensitivity[i]
+  h_label <- names(h_grid_sensitivity)[i]
+  
+  # Prepare Stan data (similar to the main loop)
+  mf_sens <- model.frame(capm_formula, sensitivity_window_df)
+  X_sens <- model.matrix(capm_formula, sensitivity_window_df)
+  y_sens <- model.response(mf_sens)
+  K_sens <- ncol(X_sens)
+  
+  stan_data_sens <- list(
+    N_train_obs = nrow(sensitivity_window_df), K = K_sens, X_train = X_sens, y_train = y_sens, 
+    tau = tau_sensitivity, h = current_h, 
+    gamma_shape = bsqr_uniform_mcmc_settings$theta_gamma_shape_val, 
+    theta_prior_rate_val = bsqr_uniform_mcmc_settings$theta_gamma_rate_val, 
+    upper_bound_for_theta = bsqr_uniform_mcmc_settings$upper_bound_theta_val, 
+    epsilon_theta = bsqr_uniform_mcmc_settings$epsilon_theta_val, 
+    beta_location = rep(bsqr_uniform_mcmc_settings$beta_loc_val_default, K_sens), 
+    beta_scale = rep(bsqr_uniform_mcmc_settings$beta_scale_val_default, K_sens)
+  )
+  
+  # Provide simple initial values for this one-off run
+  init_vals_sens <- list(beta = c(0,1), theta = 1/current_h)
+  
+  # Fit the model
+  fit_bundle_sens <- fit_bsqr_main_model_full(
+    stan_data_list = stan_data_sens, 
+    mcmc_settings_list = bsqr_uniform_mcmc_settings, 
+    compiled_stan_model_obj = compiled_bsqr_uniform_model, 
+    seed_val = as.integer(123 + i), 
+    init_vals = init_vals_sens
+  )
+  
+  # Extract and store draws for beta[2] (the market beta)
+  if (!is.null(fit_bundle_sens$fit) && all(fit_bundle_sens$fit$return_codes() == 0)) {
+    beta_draws <- posterior::as_draws_df(fit_bundle_sens$fit$draws("beta"))
+    all_beta_draws_sensitivity[[h_label]] <- data.frame(
+      h_value = h_label,
+      beta_draw = beta_draws$`beta[2]`
+    )
+  }
+  setTxtProgressBar(pb_sens, i)
+}
+close(pb_sens)
+
+# Combine all draws into a single data frame for plotting
+df_sensitivity_draws <- bind_rows(all_beta_draws_sensitivity)
+df_sensitivity_draws$h_value <- factor(df_sensitivity_draws$h_value, levels = names(h_grid_sensitivity))
+
+# 3. --- PLOTTING: Create the sensitivity plot (Figure 2) ---
+cat("\nGenerating ggplot object for sensitivity analysis...\n")
+
+sensitivity_plot <- ggplot(df_sensitivity_draws, aes(x = beta_draw, color = h_value, linetype = h_value)) +
+  geom_density(linewidth = 1.1) +
+  labs(
+    title = bquote(paste("Sensitivity of Downside Beta (", beta(0.05), ") to Bandwidth Choice")),
+    subtitle = paste0("Posterior distributions for rolling window ending ", actual_analysis_date),
+    x = bquote("Systemic Risk Parameter " * beta(0.05)),
+    y = "Posterior Density"
+  ) +
+  scale_color_manual(values = c("#0072B2", "gray20", "#D55E00")) +
+  scale_linetype_manual(values = c("solid", "dashed", "longdash")) +
+  theme_bw(base_size = 14) +
+  theme(
+    legend.position = "top",
+    legend.title = element_blank(),
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, color = "gray30"),
+    axis.title = element_text(face = "plain"),
+    legend.key.width = unit(1.5, "cm")
+  )
+
+# Save the plot
+ggsave("Figure_Sensitivity_Analysis.pdf", plot = sensitivity_plot, width = 10, height = 6)
+
+
 #### --- VIII. Generate Figures and Tables --- ####
 cat("--- Step VIII: Generating Figures and Tables (Results are on the original scale) ---\n")
 for (tau_to_process in tau_levels_to_run) {
@@ -350,16 +470,19 @@ for (tau_to_process in tau_levels_to_run) {
     linetype_palette <- c("BQR-ALD" = "dashed", "BSQR-Uniform" = "solid", "BSQR-Triangular" = "solid")
     linewidth_palette <- c("BQR-ALD" = 0.8, "BSQR-Uniform" = 1.0, "BSQR-Triangular" = 1.2)
     
-    beta_type_text <- if (tau_to_process == 0.05) "Downside Beta" else "Upside Beta"; plot_title_expr <- bquote("Evolution of JPM's Dynamic " * .(beta_type_text) * " (" * tau * " = " * .(tau_to_process) * ")"); plot_y_axis_expr <- bquote(.(beta_type_text) * ", " * beta(tau)); figure_filename_base <- paste0("Figure_Beta_tau_", stringr::str_replace(as.character(tau_to_process), "\\.", "_")); plot_subtitle_text_raw <- paste0("Comparison of the benchmark (BQR-ALD) with BSQR methods (Uniform and Triangular kernels).\nAnalysis based on a ", window_size, "-day rolling window. Shaded areas represent 95% credible intervals.")
-    common_theme <- theme_bw(base_size = 14) + theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5), plot.subtitle = element_text(size = rel(0.9), hjust = 0.5, color = "gray20", lineheight = 1.1), axis.title = element_text(face = "bold"), legend.position = "top", legend.title = element_blank(), legend.background = element_rect(fill = "white", color = "gray80"), legend.key.width = unit(1.5, "cm"), panel.grid.minor = element_blank(), panel.grid.major = element_line(color = "gray85", linetype = "dashed"), panel.border = element_rect(color = "black", fill = NA, linewidth = 0.7))
+    beta_type_text <- if (tau_to_process == 0.05) "Downside Beta" else "Upside Beta"; plot_title_expr <- bquote("Evolution of JPM's Dynamic " * .(beta_type_text) * " (" * tau * " = " * .(tau_to_process) * ")"); plot_y_axis_expr <- bquote(.(beta_type_text) * ", " * beta(tau)); figure_filename_base <- paste0("Figure_Beta_tau_", stringr::str_replace(as.character(tau_to_process), "\\.", "_")); plot_subtitle_text_raw <- paste0("Analysis based on a ", window_size, "-day rolling window. Shaded areas represent 95% credible intervals.")
+    common_theme <- theme_bw(base_size = 14) + theme(plot.title = element_text(face = "bold", size = rel(1.2), hjust = 0.5), plot.subtitle = element_text(size = rel(0.9), hjust = 0.5, color = "gray20", lineheight = 1.1), axis.title = element_text(face = "plain"), legend.position = "top", legend.title = element_blank(), legend.background = element_rect(fill = "white", color = "gray80"), legend.key.width = unit(1.5, "cm"), panel.grid.minor = element_blank(), panel.grid.major = element_line(color = "gray85", linetype = "dashed"), panel.border = element_rect(color = "black", fill = NA, linewidth = 0.7))
     y_max_limit <- if(all(is.na(df_beta_subset$Beta_UpperCI))) 1 else max(df_beta_subset$Beta_UpperCI, na.rm = TRUE)
     common_layers <- list(geom_vline(xintercept = as.Date("2020-03-11"), linetype = "dotted", color = "firebrick", linewidth = 0.8), annotate("text", x = as.Date("2020-03-11") + days(15), y = y_max_limit * 0.98, label = "COVID-19\nPandemic Declared", hjust = 0, color = "firebrick", size = 3.5, lineheight = 0.9), scale_color_manual(values = color_palette_lines), scale_linetype_manual(values = linetype_palette), scale_linewidth_manual(values = linewidth_palette), scale_x_date(date_breaks = "2 years", date_labels = "%Y"), labs(title = plot_title_expr, subtitle = plot_subtitle_text_raw, x = "End Date of Rolling Window", y = plot_y_axis_expr), common_theme)
     
-    plot_for_png <- ggplot(df_beta_subset, aes(x = Date, color = Model, linetype = Model)) + geom_ribbon(aes(ymin = Beta_LowerCI, ymax = Beta_UpperCI, fill = Model, alpha = Model), show.legend = FALSE, na.rm = TRUE, linetype = 0) + geom_line(aes(y = Beta_Mean, linewidth = Model), na.rm = TRUE) + scale_fill_manual(values = color_palette_lines) + scale_alpha_manual(values = alpha_palette_for_png) + common_layers
-    ggsave(paste0(figure_filename_base, ".png"), plot = plot_for_png, width = 11, height = 7, dpi = 300, device = "png"); cat(paste0("\nRolling Beta plot (tau=", tau_to_process, ") saved as ", figure_filename_base, ".png\n"))
-
-    plot_for_eps <- ggplot(df_beta_subset, aes(x = Date, color = Model, linetype = Model)) + geom_ribbon(aes(ymin = Beta_LowerCI, ymax = Beta_UpperCI, fill = Model), show.legend = FALSE, na.rm = TRUE, linetype = 0) + geom_line(aes(y = Beta_Mean, linewidth = Model), na.rm = TRUE) + scale_fill_manual(values = eps_fill_palette) + common_layers
-    ggsave(paste0(figure_filename_base, ".eps"), plot = plot_for_eps, width = 11, height = 7, device = "eps"); cat(paste0("Rolling Beta plot (tau=", tau_to_process, ") saved as ", figure_filename_base, ".eps\n"))
+    plot_for_pdf <- ggplot(df_beta_subset, aes(x = Date, color = Model, linetype = Model)) +
+      geom_ribbon(aes(ymin = Beta_LowerCI, ymax = Beta_UpperCI, fill = Model), show.legend = FALSE, na.rm = TRUE, linetype = 0) + 
+      geom_line(aes(y = Beta_Mean, linewidth = Model), na.rm = TRUE) + 
+      scale_fill_manual(values = eps_fill_palette) + 
+      common_layers
+    
+    ggsave(paste0(figure_filename_base, ".pdf"), plot = plot_for_pdf, width = 11, height = 7)
+    cat(paste0("Rolling Beta plot (tau=", tau_to_process, ") saved as ", figure_filename_base, ".pdf\n"))
     
   } else { 
     cat(paste0("\nInsufficient data or all model beta results are NA for tau=", tau_to_process, "; cannot generate rolling Beta plot.\n")) 
