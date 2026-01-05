@@ -1,4 +1,4 @@
-This repository contains the source code for the numerical experiments in our paper "Bayesian Smoothed Quantile Regression". For a better reproduction experience, we provide a detailed illustration as follows:
+This repository contains the source code for the numerical experiments in our paper **"Bayesian Smoothed Quantile Regression"**. For a better reproduction experience, we provide a detailed illustration as follows:
 
 ## Repository Structure
 
@@ -10,19 +10,23 @@ BSQR/
 │   ├── bsqr_gaussian_Z_robust.stan
 │   ├── bsqr_triangular_Z_robust.stan
 │   ├── bsqr_uniform_Z_robust.stan
-│   ├── simulation_main.R
-│   └── BSQR_SimResults_AllKernels_20250715_M200_n200_FULLMCMC_CV.csv
+│   ├── Sim_General_Performance.R        <-- (Corresponds to Section 8.1)
+│   ├── Sim_Stress_Test_Sparsity.R       <-- (Corresponds to Section 8.2)
+│   ├── Sim_High_Dim_Scalability.R       <-- (Corresponds to Section 8.3)
+│   ├── Table_General_Performance.csv
+│   ├── Table_Stress_Test_Sparsity.csv
+│   └── Table_Scalability_HighDim.csv
 │
 ├── Empirical analysis/
-│   ├── bqr_ald.stan
-│   ├── bsqr_triangular_Z_robust.stan
-│   ├── bsqr_uniform_Z_robust.stan
-│   ├── Empirical analysis.R
-│   ├── Figure_Beta_tau_0_05.pdf
-│   ├── Figure_Beta_tau_0_95.pdf
-│   ├── Figure_Sensitivity_Analysis.pdf
-│   ├── JPM.csv
-│   └── SPX.csv
+│   ├── bqr_ald.stan
+│   ├── bsqr_triangular_Z_robust.stan
+│   ├── bsqr_uniform_Z_robust.stan
+│   ├── Empirical analysis.R
+│   ├── Figure_Beta_tau_0_05.pdf
+│   ├── Figure_Beta_tau_0_95.pdf
+│   ├── Figure_Sensitivity_Analysis.pdf
+│   ├── JPM.csv
+│   └── SPX.csv
 │
 ├── LICENSE
 │
@@ -46,24 +50,48 @@ Ensure you have R and RStudio installed.
 
 This repository provides executable scripts for the simulation studies and the empirical analysis presented in our paper.
 
-**General Instruction:** For each part (Simulation and Empirical Analysis), please ensure all files within the respective folder are downloaded and placed in the same directory. Set this directory as your working directory in R or RStudio before running the main script.
+**General Instruction:** For each part (Simulation and Empirical Analysis), please ensure all files within the respective folder are downloaded and placed in the same directory. Set this directory as your working directory in R or RStudio before running the scripts.
 
 ### 2.1. Simulation Study
 
-This study provides a comprehensive evaluation of the BSQR framework’s performance. It assesses the estimation accuracy and inferential validity of BSQR under various settings and compares it against established frequentist and Bayesian methods. Synthetic data is generated from a linear model with covariates following an autoregressive covariance structure, considering both sparse, high-dimensional and dense, lower-dimensional coefficient scenarios. To evaluate robustness, four different error distributions are employed: standard normal, heavy-tailed Student’s t, a bimodal mixture normal, and heteroscedastic normal.
+The simulation study is organized into three parts, corresponding to Sections 8.1, 8.2, and 8.3 of the manuscript. Each script generates specific tables presented in the paper.
 
-📌 **To run:** Navigate to the `Simulation/` directory and execute `simulation_main.R`.
+📌 **To run:** Navigate to the `Simulation/` directory.
 
+#### (1) General Performance (Section 8.1)
+
+Evaluates estimation accuracy and inferential validity under standard settings () across four error distributions.
+
+* **Script:** `Sim_General_Performance.R`
+* **Output:** `Table_General_Performance.csv`
+* **Execution:**
 ```R
-# In R/RStudio, with the working directory set to 'Simulation/'
-source("simulation_main.R")
+source("Sim_General_Performance.R")
 ```
 
-**`simulation_main.R`:**
-*   Compiles the four `.stan` models for the different kernels.
-*   Runs the Monte Carlo simulations to estimate model parameters under various settings.
-*   Generates plots and summary tables for the simulation results.
-*   The results from our run are provided in `BSQR_SimResults_AllKernels_20250715_M200_n200_FULLMCMC_CV.csv` for reference.
+#### (2) Inferential Validity under Extreme Sparsity (Section 8.2)
+
+Conducts a "stress test" in a regime of extreme data sparsity () to assess the validity of Bayesian credible intervals compared to PETEL.
+
+* **Script:** `Sim_Stress_Test_Sparsity.R`
+* **Output:** `Table_Stress_Test_Sparsity.csv`
+* **Execution:**
+```R
+source("Sim_Stress_Test_Sparsity.R")
+```
+
+#### (3) Scalability in High Dimensions (Section 8.3)
+
+Probes computational boundaries in a high-dimensional setting (), contrasting the sampling efficiency (ESS/sec) of BSQR's HMC sampler against PETEL's random walk metropolis.
+
+* **Script:** `Sim_High_Dim_Scalability.R`
+* **Output:** `Table_Scalability_HighDim.csv`
+* **Execution:**
+```R
+source("Sim_High_Dim_Scalability.R")
+```
+
+*Note: Absolute execution times may vary based on hardware specifications.*
 
 ### 2.2. Empirical Analysis
 
